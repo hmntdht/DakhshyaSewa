@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fallback palette (the poster's colours). Live values come from the admin panel via <ThemeStyle/>,
+   which re-declares these variables with higher specificity. :where() keeps this block at zero specificity. */
+:where(:root, [data-theme='dark']) {
+  --c-bg: 17 18 22; --c-surface: 23 24 29; --c-elev: 31 33 40; --c-fg: 254 238 213; --c-muted: 168 161 150;
+  --c-line: 43 45 53; --c-primary: 250 186 141; --c-primary-fg: 26 18 9; --c-accent: 217 183 121;
+  --c-ok: 123 211 160; --c-bad: 242 118 107; --c-warn: 245 194 107; --radius: 14px;
+  color-scheme: dark;
+}
+:where([data-theme='light']) {
+  --c-bg: 251 245 234; --c-surface: 255 255 255; --c-elev: 244 236 221; --c-fg: 23 24 28; --c-muted: 107 101 91;
+  --c-line: 230 220 203; --c-primary: 191 86 27; --c-primary-fg: 255 255 255; --c-accent: 154 122 51;
+  --c-ok: 31 143 85; --c-bad: 200 64 47; --c-warn: 181 122 18;
+  color-scheme: light;
+}
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+body { background: rgb(var(--c-bg)); color: rgb(var(--c-fg)); font-family: theme('fontFamily.sans'); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+html[lang='ne'] body { font-family: theme('fontFamily.ne'); }
+::selection { background: rgb(var(--c-primary) / .35); }
+:focus-visible { outline: 2px solid rgb(var(--c-primary)); outline-offset: 2px; }
+
+/* ── Bilingual switch: every translatable string renders both languages; CSS shows the active one ── */
+html[data-lang='en'] [data-l='ne'], html[data-lang='ne'] [data-l='en'] { display: none !important; }
+.font-ne { font-family: theme('fontFamily.ne'); }
+
+/* ── Film grain: a little texture so large dark areas don't feel flat ── */
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 70; pointer-events: none; opacity: .045; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+@layer components {
+  .container-x { @apply mx-auto w-full max-w-page px-5 sm:px-8; }
+  .btn { @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-semibold transition duration-150 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg; }
+  .btn-primary { @apply bg-primary text-primary-fg hover:brightness-110 active:brightness-95; }
+  .btn-outline { @apply border border-line text-fg hover:border-fg/40 hover:bg-fg/5; }
+  .btn-ghost { @apply text-muted hover:bg-fg/5 hover:text-fg; }
+  .btn-danger { @apply bg-bad/15 text-bad hover:bg-bad/25; }
+  .btn-sm { @apply px-3.5 py-1.5 text-xs; }
+  .btn-lg { @apply px-7 py-3.5 text-base; }
+  .field { @apply w-full rounded-app border border-line bg-surface px-3.5 py-2.5 text-sm text-fg transition placeholder:text-muted/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-60; }
+  .label { @apply mb-1.5 block text-xs font-medium text-muted; }
+  .card { @apply rounded-app border border-line bg-surface; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-0.5 text-xs text-muted; }
+  .th { @apply px-4 py-3 text-left text-xs font-medium text-muted; }
+  .td { @apply px-4 py-3 align-middle; }
+  /* The logo's "D": flat on the left, fully round on the right. Used for media frames and key panels. */
+  .d-shape { border-radius: .75rem 5rem 5rem .75rem; }
+  .d-shape-sm { border-radius: .5rem 2.5rem 2.5rem .5rem; }
+  .hairline { height: 1px; background: linear-gradient(90deg, transparent, rgb(var(--c-accent) / .45), transparent); }
+}
+
+/* The poster's crossing light-streaks, rebuilt as two hairline gradients */
+.hero-lines {
+  background-image:
+    linear-gradient(118deg, transparent 49.85%, rgb(var(--c-accent) / .22) 50%, transparent 50.15%),
+    linear-gradient(62deg,  transparent 49.85%, rgb(var(--c-accent) / .16) 50%, transparent 50.15%);
+}
+.ds-logo { display: inline-block; aspect-ratio: 1788 / 1232; background: currentColor; -webkit-mask: url(/brand/logo.svg) center / contain no-repeat; mask: url(/brand/logo.svg) center / contain no-repeat; }
+
+/* Map markers (created imperatively by MapLibre) */
+.ds-pin { width: 34px; height: 34px; display: grid; place-items: center; filter: drop-shadow(0 4px 8px rgb(0 0 0 / .45)); }
+.ds-worker { position: relative; width: 22px; height: 22px; border-radius: 9999px; background: rgb(var(--c-primary)); border: 3px solid rgb(var(--c-bg)); box-shadow: 0 0 0 1px rgb(var(--c-primary)); }
+.ds-worker::before { content: ''; position: absolute; inset: -3px; border-radius: 9999px; background: rgb(var(--c-primary) / .5); animation: pulseRing 2s ease-out infinite; }
+.maplibregl-ctrl-attrib { background: rgb(var(--c-bg) / .7) !important; color: rgb(var(--c-muted)) !important; font-size: 10px; }
+.maplibregl-ctrl-attrib a { color: rgb(var(--c-muted)) !important; }
+.maplibregl-canvas { outline: none; }
+
+/* Scrollbars for horizontal worker rails */
+.rail { scrollbar-width: thin; scrollbar-color: rgb(var(--c-line)) transparent; }
+
+/* Tracking demo: a dot travelling along an SVG path */
+@keyframes dash { to { stroke-dashoffset: -24; } }
+.route-dash { stroke-dasharray: 6 6; animation: dash 1.4s linear infinite; }
