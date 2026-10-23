@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/maintenance",
+      "schedule": "*/10 * * * *"
+    }
+  ],
+  "functions": {
+    "src/app/api/**": {
+      "maxDuration": 30
+    }
+  }
+}
