@@ -6,6 +6,7 @@ import '@fontsource/mukta/600.css';
 import '@fontsource/mukta/700.css';
 import '@fontsource/mukta/800.css';
 import './globals.css';
+import 'leaflet/dist/leaflet.css';
 import { getCopy, getSiteConfig } from '@/lib/config';
 import { ThemeStyle, THEME_BOOT } from '@/components/ThemeStyle';
 import { AppProviders } from '@/components/providers';
@@ -19,7 +20,13 @@ export async function generateMetadata(): Promise<Metadata> {
     description: cfg.seo.description,
     applicationName: cfg.brand.name_en,
     manifest: '/manifest.webmanifest',
-    icons: { icon: '/favicon.ico', apple: '/brand/apple-touch-icon.png' },
+    icons: {
+      icon: [
+        { url: '/brand/logo.svg', type: 'image/svg+xml' },
+        { url: '/favicon.ico' },
+      ],
+      apple: '/brand/apple-touch-icon.png',
+    },
     openGraph: { title: cfg.seo.title, description: cfg.seo.description, siteName: cfg.brand.name_en, locale: 'en_NP', type: 'website', images: [{ url: '/og.jpg', width: 1200, height: 630 }] },
     twitter: { card: 'summary_large_image', title: cfg.seo.title, description: cfg.seo.description, images: ['/og.jpg'] },
   };

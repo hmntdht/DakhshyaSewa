@@ -26,11 +26,11 @@ export function TrackingDemo() {
             </g>
             <g><circle r="9" fill="rgb(var(--c-fg))" stroke="rgb(var(--c-bg))" strokeWidth="3"><animateMotion dur="11s" repeatCount="indefinite" path={ROUTE} /></circle></g>
           </svg>
-          <div className="absolute left-4 top-4 flex items-center gap-3 rounded-2xl border border-line bg-elev/90 px-4 py-3 backdrop-blur sm:left-8 sm:top-8">
+          <div className="absolute left-4 top-4 flex items-center gap-3 rounded-2xl border border-line bg-elev px-4 py-3 sm:left-8 sm:top-8">
             <Navigation className="h-4 w-4 text-primary" aria-hidden />
             <div className="text-sm leading-tight"><p className="font-medium"><T k="home.tracking.chip1" /></p><p className="text-xs text-muted"><T k="home.tracking.chip2" /></p></div>
           </div>
-          <div className="absolute bottom-4 right-4 flex items-center gap-3 rounded-2xl border border-line bg-elev/90 px-4 py-3 backdrop-blur sm:bottom-8 sm:right-10">
+          <div className="absolute bottom-4 right-4 flex items-center gap-3 rounded-2xl border border-line bg-elev px-4 py-3 sm:bottom-8 sm:right-10">
             <KeyRound className="h-4 w-4 text-accent" aria-hidden />
             <div className="text-sm leading-tight"><p className="text-xs text-muted"><T k="home.tracking.pin" /></p><p className="font-mono text-lg font-semibold tracking-[0.35em]">4821</p></div>
           </div>

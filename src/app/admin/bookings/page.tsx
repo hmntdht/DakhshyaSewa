@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search } from 'lucide-react';
+import { Search, Zap } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { Badge, PageTitle, StatusBadge } from '@/components/ui';
 import { cn, fmtDateTime, rs } from '@/lib/utils';
@@ -26,7 +26,7 @@ export default async function AdminBookings({ searchParams }: { searchParams: Pr
       </div>
       <div className="overflow-x-auto rounded-app border border-line"><table className="w-full min-w-[52rem] text-sm"><thead className="border-b border-line bg-surface"><tr>{['Code', 'Service', 'Customer', 'Worker', 'When', 'Total', 'Payment', 'Status'].map((h) => <th key={h} className="th">{h}</th>)}</tr></thead>
         <tbody className="divide-y divide-line">{rows.map((b) => (
-          <tr key={b.id} className="hover:bg-fg/[.03]"><td className="td"><Link href={`/admin/bookings/${b.id}`} className="font-mono text-xs text-primary underline-offset-4 hover:underline">{b.code}</Link></td><td className="td">{b.service_categories?.name_en}</td><td className="td">{b.customer_name}</td><td className="td">{b.workers?.display_name}</td><td className="td whitespace-nowrap">{fmtDateTime(b.scheduled_start)}</td><td className="td font-medium">{rs(b.total_amount)}</td><td className="td"><span className="mr-1.5 capitalize text-muted">{b.payment_provider}</span><Badge tone={b.payment_status}>{b.payment_status}</Badge></td><td className="td"><StatusBadge status={b.status} /></td></tr>))}
+          <tr key={b.id} className="hover:bg-fg/[.03]"><td className="td"><Link href={`/admin/bookings/${b.id}`} className="font-mono text-xs text-primary underline-offset-4 hover:underline">{b.code}</Link></td><td className="td">{b.service_categories?.name_en}</td><td className="td">{b.customer_name}</td><td className="td">{b.status === 'pending' ? <span className="inline-flex items-center gap-1.5 text-xs text-amber-500 font-medium"><Zap className="h-3.5 w-3.5 shrink-0" /> {b.workers?.display_name ? `${b.workers.display_name} (Pending)` : 'Manual Assignment'}</span> : (b.workers?.display_name ?? '—')}</td><td className="td whitespace-nowrap">{fmtDateTime(b.scheduled_start)}</td><td className="td font-medium">{rs(b.total_amount)}</td><td className="td"><span className="mr-1.5 capitalize text-muted">{b.payment_provider}</span><Badge tone={b.payment_status}>{b.payment_status}</Badge></td><td className="td"><StatusBadge status={b.status} /></td></tr>))}
           {rows.length === 0 && <tr><td colSpan={8} className="td py-12 text-center text-muted">No bookings match.</td></tr>}</tbody></table></div>
       {pages > 1 && <div className="mt-5 flex items-center justify-between text-sm text-muted"><span>Page {page} of {pages}</span><div className="flex gap-2">{page > 1 && <Link className="btn btn-outline btn-sm" href={href({ page: page - 1 })}>Previous</Link>}{page < pages && <Link className="btn btn-outline btn-sm" href={href({ page: page + 1 })}>Next</Link>}</div></div>}
     </>

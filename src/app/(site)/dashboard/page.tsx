@@ -33,9 +33,10 @@ export default async function DashboardHome() {
   const statusCounts = ['completed', 'cancelled', 'declined'].map((s) => ({ label: s[0].toUpperCase() + s.slice(1), value: all.filter((b) => b.status === s).length })).filter((x) => x.value > 0);
 
   const stats: [string, string][] = [['dash.stat.spent', rs(spent)], ['dash.stat.done', String(done.length)], ['dash.stat.hours', hours ? `${Number(hours.toFixed(1))}` : '0'], ['dash.stat.avg', done.length ? rs(spent / done.length) : '—']];
+  const firstName = (profile.full_name ?? '').split(' ')[0];
   return (
     <>
-      <PageTitle title={<>{<T k="dash.hello" />}, {(profile.full_name ?? '').split(' ')[0] || '👋'}</>} sub={<T k="dash.sub" />} action={<Link href="/book" className="btn btn-primary"><T k="nav.book" /></Link>} />
+      <PageTitle title={<>{<T k="dash.hello" />}{firstName ? `, ${firstName}` : ''}</>} sub={<T k="dash.sub" />} action={<Link href="/book" className="btn btn-primary"><T k="nav.book" /></Link>} />
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-app border border-line bg-line lg:grid-cols-4">
         {stats.map(([k, v]) => <div key={k} className="bg-surface p-5 sm:p-6"><dt className="text-xs text-muted"><T k={k} /></dt><dd className="mt-2 text-2xl font-light tracking-tight sm:text-3xl">{v}</dd></div>)}
       </dl>

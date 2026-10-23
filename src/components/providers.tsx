@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bi } from './Bi';
 import type { Msg } from '@/lib/config/types';
 
@@ -8,8 +9,13 @@ const CopyCtx = createContext<Record<string, Msg>>({});
 const LangCtx = createContext<{ lang: Lang; setLang: (l: Lang) => void; theme: 'dark' | 'light'; toggleTheme: () => void }>({ lang: 'en', setLang: () => {}, theme: 'dark', toggleTheme: () => {} });
 
 export function AppProviders({ copy, children }: { copy: Record<string, Msg>; children: ReactNode }) {
+  const router = useRouter();
   const [lang, setLangState] = useState<Lang>('en');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    (window as any).__nextRouter = router;
+  }, [router]);
 
   useEffect(() => {
     const d = document.documentElement;

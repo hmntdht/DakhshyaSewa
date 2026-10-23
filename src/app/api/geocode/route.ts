@@ -19,11 +19,15 @@ export async function GET(req: Request) {
   const base = process.env.NOMINATIM_BASE_URL ?? 'https://nominatim.openstreetmap.org';
   const url = `${base}/search?format=jsonv2&limit=6&countrycodes=np&viewbox=80.0,28.3,81.4,29.2&bounded=0&q=${encodeURIComponent(q)}`;
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': process.env.GEOCODER_USER_AGENT ?? 'DakshaSewa/1.0', 'Accept-Language': 'en,ne' }, signal: AbortSignal.timeout(6000) });
+    const ua = (process.env.GEOCODER_USER_AGENT ?? 'DakshaSewa/1.0 (contact: info@dakshasewa.com)').replace(/^"|"$/g, '');
+    const r = await fetch(url, { headers: { 'User-Agent': ua, 'Accept-Language': 'en,ne' }, signal: AbortSignal.timeout(6000) });
     if (!r.ok) throw new Error(String(r.status));
     const rows = (await r.json()) as { display_name: string; lat: string; lon: string }[];
     const data = rows.map((x) => ({ label: x.display_name.split(',').slice(0, 4).join(',').trim(), lat: Number(x.lat), lng: Number(x.lon) }));
     cache.set(key, { at: Date.now(), data }); if (cache.size > 500) cache.delete(cache.keys().next().value as string);
     return NextResponse.json(data);
-  } catch { return NextResponse.json([], { status: 502 }); }
+  } catch (err) {
+    console.error('[/api/geocode error]:', err);
+    return NextResponse.json([]);
+  }
 }

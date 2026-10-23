@@ -130,8 +130,8 @@ export const COPY_DEFAULTS: Record<string, { en: string; ne: string }> = {
   "ne": "हामी के मा सघाउन सक्छौं"
  },
  "home.services.sub": {
-  "en": "Four services to start, more on the way. Prices are shown up front.",
-  "ne": "सुरुमा चार सेवा, थप आउँदैछन्। मूल्य पहिल्यै देखिन्छ।"
+  "en": "Trusted home services delivered by verified professionals at your convenience.",
+  "ne": "प्रमाणित दक्ष सहयोगीहरूद्वारा तपाईंको घरमै गुणस्तरीय सेवा।"
  },
  "home.services.all": {
   "en": "All services",
@@ -328,6 +328,10 @@ export const COPY_DEFAULTS: Record<string, { en: string; ne: string }> = {
  "enquiry.phone": {
   "en": "Phone number",
   "ne": "फोन नम्बर"
+ },
+ "enquiry.email": {
+  "en": "Your email (optional — for reply)",
+  "ne": "इमेल (ऐच्छिक — उत्तरका लागि)"
  },
  "enquiry.service": {
   "en": "Service you need",
@@ -757,6 +761,10 @@ export const COPY_DEFAULTS: Record<string, { en: string; ne: string }> = {
   "en": "Code from SMS",
   "ne": "SMS को कोड"
  },
+ "auth.email_code": {
+  "en": "Verification code",
+  "ne": "प्रमाणीकरण कोड"
+ },
  "auth.verify": {
   "en": "Verify and continue",
   "ne": "प्रमाणित गरी जारी राख्नुहोस्"
@@ -764,6 +772,22 @@ export const COPY_DEFAULTS: Record<string, { en: string; ne: string }> = {
  "auth.change_number": {
   "en": "Use a different number",
   "ne": "अर्को नम्बर प्रयोग गर्नुहोस्"
+ },
+ "auth.change_email": {
+  "en": "Use a different email",
+  "ne": "अर्को इमेल प्रयोग गर्नुहोस्"
+ },
+ "auth.resend_code": {
+  "en": "Resend code",
+  "ne": "पुनः कोड पठाउनुहोस्"
+ },
+ "auth.email_otp_sent": {
+  "en": "Verification code sent to your email. Check your inbox.",
+  "ne": "इमेलमा प्रमाणीकरण कोड पठाइएको छ। आफ्नो इनबक्स हेर्नुहोस्।"
+ },
+ "auth.enter_email_code": {
+  "en": "Enter the verification code sent to your email.",
+  "ne": "तपाईंको इमेलमा पठाइएको प्रमाणीकरण कोड प्रविष्ट गर्नुहोस्।"
  },
  "auth.otp_sent": {
   "en": "Code sent. It may take a minute.",
@@ -866,8 +890,8 @@ export const COPY_DEFAULTS: Record<string, { en: string; ne: string }> = {
   "ne": "समीक्षा"
  },
  "book.step.pay": {
-  "en": "Pay",
-  "ne": "भुक्तानी"
+  "en": "Confirm",
+  "ne": "पुष्टि"
  },
  "book.choose_service": {
   "en": "What do you need?",
@@ -982,16 +1006,16 @@ export const COPY_DEFAULTS: Record<string, { en: string; ne: string }> = {
   "ne": "मैले सम्झौता पढेँ र स्वीकार गर्छु।"
  },
  "book.pay_title": {
-  "en": "How would you like to pay?",
-  "ne": "कसरी भुक्तानी गर्नुहुन्छ?"
+  "en": "Confirmation & Preferred Settlement",
+  "ne": "पुष्टि र भुक्तानी प्राथमिकता"
  },
  "pay.cash": {
-  "en": "Cash after the job",
-  "ne": "काम सकिएपछि नगद"
+  "en": "Settle upon service completion",
+  "ne": "काम सकिएपछि भुक्तानी"
  },
  "pay.cash.hint": {
-  "en": "Pay the worker directly when the job is done.",
-  "ne": "काम सकिएपछि सेवाप्रदायकलाई सिधै तिर्नुहोस्।"
+  "en": "Settle directly in cash or digital wallet once the service is completed to your satisfaction.",
+  "ne": "सेवा सम्पन्न भएपछि नगद वा डिजिटल वालेटबाट सिधै भुक्तानी गर्नुहोस्।"
  },
  "pay.esewa": {
   "en": "eSewa",

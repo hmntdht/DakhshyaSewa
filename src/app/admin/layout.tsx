@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex items-center gap-4"><Link href="/admin" aria-label="Admin home" className="text-fg"><Logo className="h-8" /></Link><span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary">Admin</span></div>
         <div className="flex items-center gap-3 text-sm"><span className="hidden text-muted sm:block">{me.full_name ?? me.email}</span><LangThemeToggle className="hidden sm:flex" /><Link href="/" target="_blank" className="btn btn-outline btn-sm"><ExternalLink className="h-3.5 w-3.5" />View site</Link></div>
       </header>
-      <div className="lg:grid lg:grid-cols-[16rem_1fr]"><AdminNav /><main className="min-w-0 p-5 sm:p-8">{children}</main></div>
+      <div className="lg:grid lg:grid-cols-[16rem_1fr]"><AdminNav /><main id="main" className="min-w-0 p-5 sm:p-8">{children}</main></div>
     </div>
   );
 }

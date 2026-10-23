@@ -16,8 +16,8 @@ export default async function WorkerLayout({ children }: { children: React.React
   return (
     <div className="container-x py-10 sm:py-14">
       <nav className="mb-8 flex items-center gap-1 border-b border-line text-sm">
-        <Link href="/worker" className="px-4 py-3 text-muted hover:text-fg"><T k="worker.nav.jobs" /></Link>
-        <Link href="/worker/profile" className="px-4 py-3 text-muted hover:text-fg"><T k="worker.nav.profile" /></Link>
+        <Link href="/worker" prefetch={true} className="px-4 py-3 text-muted hover:text-fg"><T k="worker.nav.jobs" /></Link>
+        <Link href="/worker/profile" prefetch={true} className="px-4 py-3 text-muted hover:text-fg"><T k="worker.nav.profile" /></Link>
       </nav>
       {worker.status !== 'approved' && <Notice tone={tone} className="mb-8"><T k={`worker.status.${worker.status}`} /></Notice>}
       {worker.status === 'approved' && <LiveRefresh />}

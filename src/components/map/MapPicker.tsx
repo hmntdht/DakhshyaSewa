@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Marker } from 'maplibre-gl';
+import type { Marker, GeoJSONSource, MapMouseEvent } from 'maplibre-gl';
 import { Crosshair, Loader2, Search } from 'lucide-react';
 import { useMapLibre } from './useMapLibre';
 import { circlePolygon, pinEl } from './geo';
@@ -30,8 +30,9 @@ export default function MapPicker({ value, onChange, areas, height = 380 }: { va
   const place = useCallback((lat: number, lng: number, fly = true) => {
     if (!map) return;
     if (!marker.current) {
-      marker.current = new maplibregl.Marker({ element: pinEl(), draggable: true, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
-      marker.current.on('dragend', () => { const p = marker.current!.getLngLat(); cb.current({ lat: p.lat, lng: p.lng }); reverse(p.lat, p.lng); });
+      const m = new maplibregl.Marker({ element: pinEl(), draggable: true, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
+      m.on('dragend', () => { const p = m.getLngLat(); cb.current({ lat: p.lat, lng: p.lng }); reverse(p.lat, p.lng); });
+      marker.current = m;
     } else marker.current.setLngLat([lng, lat]);
     if (fly) map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 16), speed: 1.4 });
   }, [map, maplibregl, reverse]);
@@ -41,7 +42,7 @@ export default function MapPicker({ value, onChange, areas, height = 380 }: { va
     if (!map) return;
     const draw = () => {
       const fc: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: areas.map((a) => circlePolygon(a.center_lat, a.center_lng, Number(a.radius_km))) };
-      if (map.getSource('areas')) (map.getSource('areas') as maplibregl.GeoJSONSource).setData(fc);
+      if (map.getSource('areas')) (map.getSource('areas') as GeoJSONSource).setData(fc);
       else {
         map.addSource('areas', { type: 'geojson', data: fc });
         map.addLayer({ id: 'areas-fill', type: 'fill', source: 'areas', paint: { 'fill-color': '#FABA8D', 'fill-opacity': 0.07 } });
@@ -54,7 +55,7 @@ export default function MapPicker({ value, onChange, areas, height = 380 }: { va
   // click to place
   useEffect(() => {
     if (!map) return;
-    const click = (e: maplibregl.MapMouseEvent) => { place(e.lngLat.lat, e.lngLat.lng, false); cb.current({ lat: e.lngLat.lat, lng: e.lngLat.lng }); reverse(e.lngLat.lat, e.lngLat.lng); };
+    const click = (e: MapMouseEvent) => { place(e.lngLat.lat, e.lngLat.lng, false); cb.current({ lat: e.lngLat.lat, lng: e.lngLat.lng }); reverse(e.lngLat.lat, e.lngLat.lng); };
     map.on('click', click); return () => { map.off('click', click); };
   }, [map, place, reverse]);
 

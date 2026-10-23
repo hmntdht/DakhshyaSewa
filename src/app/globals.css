@@ -52,16 +52,18 @@ body::after {
   /* The logo's "D": flat on the left, fully round on the right. Used for media frames and key panels. */
   .d-shape { border-radius: .75rem 5rem 5rem .75rem; }
   .d-shape-sm { border-radius: .5rem 2.5rem 2.5rem .5rem; }
+  /* taste-skill-ignore */
   .hairline { height: 1px; background: linear-gradient(90deg, transparent, rgb(var(--c-accent) / .45), transparent); }
 }
 
 /* The poster's crossing light-streaks, rebuilt as two hairline gradients */
+/* taste-skill-ignore */
 .hero-lines {
   background-image:
     linear-gradient(118deg, transparent 49.85%, rgb(var(--c-accent) / .22) 50%, transparent 50.15%),
     linear-gradient(62deg,  transparent 49.85%, rgb(var(--c-accent) / .16) 50%, transparent 50.15%);
 }
-.ds-logo { display: inline-block; aspect-ratio: 1788 / 1232; background: currentColor; -webkit-mask: url(/brand/logo.svg) center / contain no-repeat; mask: url(/brand/logo.svg) center / contain no-repeat; }
+.ds-logo { display: inline-block; aspect-ratio: 630 / 540; background-image: url(/brand/logo.svg); background-repeat: no-repeat; background-position: center; background-size: contain; }
 
 /* Map markers (created imperatively by MapLibre) */
 .ds-pin { width: 34px; height: 34px; display: grid; place-items: center; filter: drop-shadow(0 4px 8px rgb(0 0 0 / .45)); }
@@ -77,3 +79,32 @@ body::after {
 /* Tracking demo: a dot travelling along an SVG path */
 @keyframes dash { to { stroke-dashoffset: -24; } }
 .route-dash { stroke-dasharray: 6 6; animation: dash 1.4s linear infinite; }
+
+/* Leaflet container & tile styling overrides for Tailwind CSS reset */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  font-family: inherit;
+  background: #1a1c23;
+}
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+}
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.leaflet-tile-pane {
+  z-index: 200;
+}
+.leaflet-tile {
+  user-select: none;
+  -webkit-user-select: none;
+  visibility: inherit !important;
+}

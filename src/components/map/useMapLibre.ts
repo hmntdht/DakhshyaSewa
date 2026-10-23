@@ -1,6 +1,7 @@
 'use client';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import maplibregl, { type Map as MLMap } from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
+type MLMap = maplibregl.Map;
 import { useEffect, useRef, useState } from 'react';
 import { buildMapStyle, DHANGADHI } from '@/lib/geo/map-style';
 import { useLang } from '../providers';

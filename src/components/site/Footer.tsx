@@ -13,8 +13,7 @@ export async function Footer() {
   const c = cfg.contact;
   const link = 'text-sm text-muted transition hover:text-fg';
   return (
-    <footer className="mt-24 border-t border-line">
-      <div className="hairline" />
+    <footer className="mt-24 border-t border-line bg-surface/30">
       <div className="container-x grid gap-12 py-14 md:grid-cols-[1.3fr_1fr_1fr_1.2fr]">
         <div>
           <Logo logoUrl={cfg.brand.logo_url} className="h-14" />

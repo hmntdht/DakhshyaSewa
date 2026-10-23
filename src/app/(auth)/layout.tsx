@@ -11,7 +11,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <Link href="/" aria-label="Daksha Sewa home"><Logo logoUrl={cfg.brand.logo_url} className="h-11" /></Link>
         <LangThemeToggle />
       </header>
-      <main className="container-x flex flex-1 items-start justify-center pb-16 pt-4 sm:items-center">{children}</main>
+      <main id="main" className="container-x flex flex-1 items-start justify-center pb-16 pt-4 sm:items-center">{children}</main>
     </div>
   );
 }

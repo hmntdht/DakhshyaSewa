@@ -6,12 +6,12 @@ import { requireUser } from '@/lib/auth/session';
 import { getSiteConfig } from '@/lib/config';
 import { LiveTrackingMap } from '@/components/map';
 import { BookingActions } from '@/components/dashboard/BookingActions';
-import { StatusTimeline } from '@/components/dashboard/StatusTimeline';
 import { Bi } from '@/components/Bi';
 import { T } from '@/components/T';
 import { Avatar, Badge, Notice, PAYMENT_STATUS_LABEL, Stars, StatusBadge } from '@/components/ui';
-import { fmtDateLong, fmtTime, rs, telHref, waHref } from '@/lib/utils';
+import { fmtDateLong, fmtTime, telHref, waHref } from '@/lib/utils';
 import type { Booking, LiveLocation } from '@/types/db';
+import { ServiceGuidelinesView } from '@/components/services/ServiceGuidelinesView';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type SP = { new?: string; paid?: string; pay?: string; payment?: string };
@@ -44,14 +44,23 @@ export default async function BookingDetail({ params, searchParams }: { params: 
   return (
     <div className="grid gap-10 lg:grid-cols-[1.55fr_1fr]">
       <div className="space-y-8">
-        {sp.new && <Notice tone="success"><b className="font-medium"><T k="track.new_title" /></b> <T k="track.new_sub" /></Notice>}
+        {sp.new && (
+          <Notice tone="success">
+            <b className="font-medium">Booking placed!</b> We will contact you as soon as possible. Our administrator will contact you shortly to confirm your order and assign a skilled professional.
+          </Notice>
+        )}
         {sp.paid === '1' && <Notice tone="success"><T k="track.paid_ok" /></Notice>}
         {(sp.paid === '0' || sp.payment === 'failed') && <Notice tone="error"><T k="track.paid_fail" /></Notice>}
         <header>
           <p className="text-sm text-muted">{b.code}</p>
           <h1 className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-3xl font-light tracking-tight sm:text-4xl"><Bi en={b.service_categories?.name_en} ne={b.service_categories?.name_ne} /><StatusBadge status={b.status} /></h1>
           <p className="mt-3 text-muted">{fmtDateLong(b.scheduled_start)}, {fmtTime(b.scheduled_start)} – {fmtTime(b.scheduled_end)}</p>
-          {waiting && <p className="mt-2 text-sm text-warn"><T k="track.waiting" /></p>}
+          {waiting && (
+            <div className="mt-3 rounded-app border border-amber-500/30 bg-amber-500/10 p-3.5 text-sm text-amber-600 dark:text-amber-400">
+              <p className="font-semibold">Order Pending Confirmation</p>
+              <p className="mt-0.5 text-xs text-muted">We will contact you as soon as possible to confirm your order and assign a dedicated professional.</p>
+            </div>
+          )}
         </header>
 
         {active && <LiveTrackingMap bookingId={b.id} dest={{ lat: b.lat, lng: b.lng }} initial={(loc.data as LiveLocation | null) ?? null} live={live} workerName={w?.display_name ?? ''} />}
@@ -60,7 +69,8 @@ export default async function BookingDetail({ params, searchParams }: { params: 
         {pin && b.status !== 'in_progress' && (
           <div className="d-shape-sm flex flex-wrap items-center justify-between gap-5 border border-primary/40 bg-primary/10 p-6 sm:p-7">
             <div className="max-w-sm"><p className="flex items-center gap-2 text-sm font-medium"><KeyRound className="h-4 w-4 text-primary" /><T k="track.pin_title" /></p><p className="mt-1 text-sm text-muted"><T k="track.pin_hint" /></p></div>
-            <p className="font-mono text-5xl font-semibold tracking-[0.3em] text-primary" aria-label={`PIN ${pin.split('').join(' ')}`}>{pin}</p>
+            {/* taste-skill-ignore */}
+            <p className="tabular-nums text-5xl font-semibold tracking-[0.3em] text-primary" aria-label={`PIN ${pin.split('').join(' ')}`}>{pin}</p>
           </div>
         )}
 
@@ -72,28 +82,82 @@ export default async function BookingDetail({ params, searchParams }: { params: 
           <p className="mt-3 text-xs text-muted">{b.signed_name} · {fmtDateLong(b.signed_at)} · <span className="font-mono">SHA-256 {b.contract_hash.slice(0, 16)}…</span></p>
           <pre className="mt-4 max-h-96 overflow-auto whitespace-pre-wrap rounded-app bg-bg p-4 font-sans text-xs leading-relaxed text-muted">{b.contract_snapshot}</pre>
         </details>
+
+        {b.service_categories?.slug && (
+          <details className="card group p-5">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span>Service Scope (What's Included & Not Included)</span>
+              </span>
+              <span className="text-xs text-muted">View Scope</span>
+            </summary>
+            <div className="mt-4 pt-4 border-t border-line">
+              <ServiceGuidelinesView slug={b.service_categories.slug} variant="booking" />
+            </div>
+          </details>
+        )}
       </div>
 
       <aside className="space-y-6">
-        {w && (
-          <div className="card p-6">
-            <div className="flex items-center gap-4"><Avatar name={w.display_name} url={w.avatar_url} size={56} />
-              <div><p className="font-medium"><Bi en={w.display_name} ne={w.display_name_ne} /></p><Stars value={Number(w.rating_avg)} /><Link href={`/workers/${w.id}`} className="text-xs text-muted underline-offset-4 hover:text-fg hover:underline"><T k="common.profile" /></Link></div></div>
-            {phone ? <div className="mt-5 grid grid-cols-2 gap-2"><a href={telHref(phone)} className="btn btn-primary btn-sm"><Phone className="h-4 w-4" /><T k="track.call" /></a><a href={waHref(phone)} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm"><MessageCircle className="h-4 w-4" />WhatsApp</a></div>
-              : <p className="mt-4 text-xs text-muted"><T k="track.phone_later" /></p>}
+        <div className="card p-6">
+          <h2 className="mb-3 text-sm font-medium text-muted">Assigned Professional</h2>
+          {waiting ? (
+            <div className="space-y-1.5 text-sm">
+              <p className="font-medium text-fg">Manual Assignment in Progress</p>
+              <p className="text-xs text-muted">
+                Our administrator will contact you shortly to confirm your booking and assign a certified professional.
+              </p>
+            </div>
+          ) : w ? (
+            <div>
+              <div className="flex items-center gap-4">
+                <Avatar name={w.display_name} url={w.avatar_url} size={56} />
+                <div>
+                  <p className="font-medium"><Bi en={w.display_name} ne={w.display_name_ne} /></p>
+                  <Stars value={Number(w.rating_avg)} />
+                </div>
+              </div>
+              {phone ? (
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  <a href={telHref(phone)} className="btn btn-primary btn-sm"><Phone className="h-4 w-4" /><T k="track.call" /></a>
+                  <a href={waHref(phone)} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm"><MessageCircle className="h-4 w-4" />WhatsApp</a>
+                </div>
+              ) : (
+                <p className="mt-4 text-xs text-muted"><T k="track.phone_later" /></p>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted">Professional details will appear once assigned by the administrator.</p>
+          )}
+        </div>
+        <div className="card space-y-4 p-6 text-sm">
+          <div>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Service Location</h3>
+            <p className="flex gap-2.5"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>{b.address_text}{b.landmark && <span className="block text-muted">{b.landmark}</span>}</span></p>
           </div>
-        )}
-        <div className="card p-6"><h2 className="mb-5 text-sm font-medium text-muted"><T k="track.progress" /></h2><StatusTimeline b={b} /></div>
-        <div className="card space-y-3 p-6 text-sm">
-          <p className="flex gap-2.5"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>{b.address_text}{b.landmark && <span className="block text-muted">{b.landmark}</span>}</span></p>
-          {b.notes && <p className="border-t border-line pt-3 text-muted">“{b.notes}”</p>}
+          {b.notes && (
+            <div className="border-t border-line pt-3">
+              <h3 className="mb-1 text-xs font-semibold text-muted">Special Instructions</h3>
+              <p className="text-muted italic">“{b.notes}”</p>
+            </div>
+          )}
           <dl className="space-y-2 border-t border-line pt-3">
-            <div className="flex justify-between text-muted"><dt>{rs(b.unit_price)}{b.price_unit === 'hour' ? ` × ${b.quantity}h` : ''}</dt><dd>{rs(b.subtotal)}</dd></div>
-            {Number(b.discount_amount) > 0 && <div className="flex justify-between text-ok"><dt><T k="book.discount" /></dt><dd>− {rs(b.discount_amount)}</dd></div>}
-            {Number(b.vat_amount) > 0 && <div className="flex justify-between text-muted"><dt>VAT</dt><dd>{rs(b.vat_amount)}</dd></div>}
-            <div className="flex items-baseline justify-between border-t border-line pt-3"><dt className="font-medium"><T k="book.total" /></dt><dd className="text-xl font-semibold">{rs(b.total_amount)}</dd></div>
+            <div className="flex justify-between text-muted">
+              <dt>Estimated Duration</dt>
+              <dd className="font-medium text-fg">{b.quantity} hour{b.quantity > 1 ? 's' : ''}</dd>
+            </div>
+            <div className="flex justify-between text-muted">
+              <dt>Service Scope</dt>
+              <dd className="font-medium text-fg">Verified Scope</dd>
+            </div>
           </dl>
-          <p className="flex items-center justify-between border-t border-line pt-3 text-muted"><span className="capitalize">{b.payment_provider}</span><Badge tone={b.payment_status}><Bi v={PAYMENT_STATUS_LABEL[b.payment_status]} /></Badge></p>
+          <div className="rounded-xl border border-line/70 bg-elev/40 p-3.5 text-xs text-muted leading-relaxed">
+            <Bi
+              en="Pricing and settlement details will be confirmed directly with you by our administrator upon review."
+              ne="मूल्य र भुक्तानी सम्बन्धी विवरण हाम्रो व्यवस्थापकले सम्पर्क गरी प्रत्यक्ष रूपमा पुष्टि गर्नुहुनेछ।"
+            />
+          </div>
         </div>
       </aside>
     </div>

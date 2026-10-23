@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Marker } from 'maplibre-gl';
+import type { Marker, GeoJSONSource } from 'maplibre-gl';
 import { LocateFixed } from 'lucide-react';
 import { createClient } from '@/lib/supabase/browser';
 import { useMapLibre } from './useMapLibre';
@@ -57,7 +57,7 @@ export default function LiveTrackingMap({ bookingId, dest, initial, live, worker
     if (!map) return;
     lastGeom.current = { coords, dashed };
     const data: GeoJSON.Feature = { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } };
-    const src = map.getSource('route') as maplibregl.GeoJSONSource | undefined;
+    const src = map.getSource('route') as GeoJSONSource | undefined;
     if (src) src.setData(data);
     else { map.addSource('route', { type: 'geojson', data }); map.addLayer({ id: 'route', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#FABA8D', 'line-width': 4.5, 'line-opacity': 0.9, ...(dashed ? { 'line-dasharray': [1.5, 2] } : {}) } }); }
   }, [map]);

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CheckCircle2, ChevronRight, MapPin, X } from 'lucide-react';
+import { Check, CheckCircle2, ChevronRight, MapPin, Navigation2, X } from 'lucide-react';
 import { requireWorker } from '@/lib/auth/session';
 import { createClient } from '@/lib/supabase/server';
 import { setStatusAction } from '@/lib/booking/actions';
@@ -7,8 +7,8 @@ import { BarChart } from '@/components/charts/Charts';
 import { RowAction } from '@/components/RowAction';
 import { Bi } from '@/components/Bi';
 import { T } from '@/components/T';
-import { EmptyState, PageTitle, StatusBadge, Stars } from '@/components/ui';
-import { fmtDateTime, isoToNpt, rs } from '@/lib/utils';
+import { Badge, EmptyState, PageTitle, StatusBadge, Stars } from '@/components/ui';
+import { fmtDateTime, haversineKm, isoToNpt, roughLatLng, rs } from '@/lib/utils';
 import type { Booking } from '@/types/db';
 
 const LIVE = ['confirmed', 'en_route', 'arrived', 'in_progress'];
@@ -27,6 +27,10 @@ export default async function WorkerHome() {
   for (const b of done) { const s = months.find((x) => x.key === isoToNpt(b.completed_at ?? b.scheduled_start).date.slice(0, 7)); if (s) s.value += Number(b.worker_payout); }
   const total = done.reduce((s, b) => s + Number(b.worker_payout), 0);
 
+  // Load worker's service area for in-range badge on pending requests
+  const { data: areaData } = await sb.from('worker_service_areas').select('center_lat,center_lng,radius_km').eq('worker_id', worker.id).maybeSingle();
+  const ownArea = areaData as { center_lat: number; center_lng: number; radius_km: number } | null;
+
   return (
     <>
       <PageTitle title={<><T k="worker.hello" /> {worker.display_name.split(' ')[0]}</>} sub={<Stars value={Number(worker.rating_avg)} count={worker.rating_count} size={16} />} />
@@ -37,17 +41,43 @@ export default async function WorkerHome() {
       {requests.length > 0 && (
         <section className="mt-12">
           <h2 className="mb-4 flex items-center gap-3 text-xl font-medium"><T k="worker.requests" /><span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-fg">{requests.length}</span></h2>
-          <ul className="space-y-3">{requests.map((b) => (
-            <li key={b.id} className="card flex flex-wrap items-center justify-between gap-4 border-primary/40 p-5">
-              <Link href={`/worker/jobs/${b.id}`} className="min-w-0 flex-1">
-                <p className="font-medium"><Bi en={b.service_categories?.name_en} ne={b.service_categories?.name_ne} /> · {b.customer_name}</p>
-                <p className="text-sm text-muted">{fmtDateTime(b.scheduled_start)} · {b.duration_hours}h</p>
-                <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-muted"><MapPin className="h-3 w-3" />{b.address_text}</p>
-              </Link>
-              <div className="flex items-center gap-3"><b className="text-lg">{rs(b.worker_payout)}</b>
-                <RowAction action={setStatusAction.bind(null, b.id, 'confirmed', undefined)} className="btn-primary"><CheckCircle2 className="h-4 w-4" /><T k="worker.accept" /></RowAction>
-                <RowAction action={setStatusAction.bind(null, b.id, 'declined', 'Declined by worker')} className="btn-outline" confirm="Decline this request?"><X className="h-4 w-4" /><T k="worker.decline" /></RowAction></div>
-            </li>))}</ul>
+          <ul className="space-y-3">{requests.map((b) => {
+            const rough = roughLatLng(b.lat, b.lng);
+            const distKm = ownArea ? haversineKm({ lat: ownArea.center_lat, lng: ownArea.center_lng }, rough) : null;
+            const inRange = ownArea && distKm !== null ? distKm <= Number(ownArea.radius_km) : null;
+            return (
+              <li key={b.id} className="card flex flex-wrap items-center justify-between gap-4 border-primary/40 p-5">
+                <Link href={`/worker/jobs/${b.id}`} className="min-w-0 flex-1">
+                  <p className="font-medium"><Bi en={b.service_categories?.name_en} ne={b.service_categories?.name_ne} /> · {b.customer_name}</p>
+                  <p className="text-sm text-muted">{fmtDateTime(b.scheduled_start)} · {b.duration_hours}h</p>
+                  <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-muted">
+                    <MapPin className="h-3 w-3" />
+                    <span className="truncate italic">~{b.address_text.split(',').slice(-2).join(',').trim()}</span>
+                    {inRange !== null && (
+                      <>
+                        <Navigation2 className="ml-1 h-3 w-3 shrink-0" />
+                        <span>{distKm!.toFixed(1)} km</span>
+                        <Badge tone={inRange ? 'ok' : 'warn'} className="ml-0.5 text-[10px] px-1.5 py-0">
+                          {inRange ? (
+                            <span className="inline-flex items-center gap-0.5">
+                              <Check className="h-2.5 w-2.5" />
+                              <span>In range</span>
+                            </span>
+                          ) : (
+                            'Out of range'
+                          )}
+                        </Badge>
+                      </>
+                    )}
+                  </p>
+                </Link>
+                <div className="flex items-center gap-3"><b className="text-lg">{rs(b.worker_payout)}</b>
+                  <RowAction action={setStatusAction.bind(null, b.id, 'confirmed', undefined)} className="btn-primary"><CheckCircle2 className="h-4 w-4" /><T k="worker.accept" /></RowAction>
+                  <RowAction action={setStatusAction.bind(null, b.id, 'declined', 'Declined by worker')} className="btn-outline" confirm="Decline this request?"><X className="h-4 w-4" /><T k="worker.decline" /></RowAction>
+                </div>
+              </li>
+            );
+          })}</ul>
         </section>
       )}
 

@@ -2,13 +2,20 @@ import 'server-only';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { callbackUrl, money, type PaymentRow, type StartResult } from './index';
 
-// eSewa ePay v2 (HMAC-SHA256 signed form POST). Defaults point at eSewa's public UAT sandbox.
-const cfg = () => ({
-  productCode: process.env.ESEWA_PRODUCT_CODE ?? 'EPAYTEST',
-  secret: process.env.ESEWA_SECRET_KEY ?? '8gBm/:&EnLH',
-  formUrl: process.env.ESEWA_FORM_URL ?? 'https://rc-epay.esewa.com.np/api/epay/main/v2/form',
-  statusUrl: process.env.ESEWA_STATUS_URL ?? 'https://rc.esewa.com.np/api/epay/transaction/status/',
-});
+// eSewa ePay v2 (HMAC-SHA256 signed form POST). Defaults point at eSewa's public UAT sandbox in development.
+const cfg = () => {
+  const isProd = process.env.NODE_ENV === 'production';
+  const secret = process.env.ESEWA_SECRET_KEY;
+  if (isProd && !secret) {
+    throw new Error('ESEWA_SECRET_KEY is not configured in production');
+  }
+  return {
+    productCode: process.env.ESEWA_PRODUCT_CODE ?? (isProd ? '' : 'EPAYTEST'),
+    secret: secret || '8gBm/:&EnLH',
+    formUrl: process.env.ESEWA_FORM_URL ?? 'https://rc-epay.esewa.com.np/api/epay/main/v2/form',
+    statusUrl: process.env.ESEWA_STATUS_URL ?? 'https://rc.esewa.com.np/api/epay/transaction/status/',
+  };
+};
 
 function sign(values: Record<string, string>, signedNames: string) {
   const msg = signedNames.split(',').map((n) => `${n}=${values[n]}`).join(',');

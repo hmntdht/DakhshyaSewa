@@ -18,9 +18,9 @@ export function AdminNav() {
   const list = (
     <nav aria-label="Admin" className="space-y-6 p-4">
       {GROUPS.map((g) => (
-        <div key={g.title}><p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted/70">{g.title}</p>
+        <div key={g.title}><p className="mb-2 px-3 text-xs font-semibold text-muted/80">{g.title}</p>
           <ul className="space-y-0.5">{g.items.map(([href, label]) => { const on = href === '/admin' ? path === href : path === href || path.startsWith(`${href}/`); return (
-            <li key={href}><Link href={href} onClick={() => setOpen(false)} aria-current={on ? 'page' : undefined} className={cn('block rounded-lg px-3 py-2 text-sm transition', on ? 'bg-primary/15 font-medium text-primary' : 'text-muted hover:bg-fg/5 hover:text-fg')}>{label}</Link></li>); })}</ul></div>))}
+            <li key={href}><Link href={href} prefetch={true} onClick={() => setOpen(false)} aria-current={on ? 'page' : undefined} className={cn('block rounded-lg px-3 py-2 text-sm transition', on ? 'bg-primary/15 font-medium text-primary' : 'text-muted hover:bg-fg/5 hover:text-fg')}>{label}</Link></li>); })}</ul></div>))}
     </nav>
   );
   return (

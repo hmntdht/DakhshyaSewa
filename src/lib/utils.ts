@@ -65,3 +65,28 @@ export const deepMerge = <T,>(base: T, over: unknown): T => {
   for (const [k, v] of Object.entries(over as Record<string, unknown>)) out[k] = k in out ? deepMerge(out[k], v) : v;
   return out as T;
 };
+
+/**
+ * Privacy: snap coordinates to a ~500 m grid so we never expose the exact
+ * client address to workers who haven't been accepted yet.
+ * 0.005° ≈ 556 m at the equator (slightly less at Nepal's latitude ~28°N).
+ */
+export const roughLatLng = (lat: number, lng: number, gridDeg = 0.005) => ({
+  lat: Math.round(lat / gridDeg) * gridDeg,
+  lng: Math.round(lng / gridDeg) * gridDeg,
+});
+
+/** Reverse-geocode a rough lat/lng to a human-readable neighbourhood label (server-side). */
+export async function roughAreaName(lat: number, lng: number, userAgent = 'DakshaSewa/1.0'): Promise<string> {
+  try {
+    const base = process.env.NOMINATIM_BASE_URL ?? 'https://nominatim.openstreetmap.org';
+    const r = await fetch(`${base}/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14`, {
+      headers: { 'User-Agent': userAgent, 'Accept-Language': 'en' },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!r.ok) throw new Error('nominatim');
+    const j = await r.json() as { address?: { suburb?: string; neighbourhood?: string; city?: string; town?: string; district?: string; county?: string } };
+    const a = j.address ?? {};
+    return [a.suburb ?? a.neighbourhood, a.city ?? a.town ?? a.district ?? a.county].filter(Boolean).join(', ') || 'Nearby area';
+  } catch { return 'Nearby area'; }
+}

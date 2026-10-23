@@ -11,27 +11,61 @@ import { attachRef, preparePayment, type StartResult } from '@/lib/payments';
 import { done, fail, RATE_LIMITED, toMsg, type ActionResult } from '@/lib/errors';
 import type { BookingStatus, Provider, Quote } from '@/types/db';
 
+import { sendAdminNewBookingEmail } from '@/lib/email';
+
 const uuid = z.string().uuid();
 
 // ───────── quote (read-only; the database is the single source of truth for prices) ─────────
-export async function quoteAction(input: { workerId: string; categoryId: string; hours: number; promo?: string }): Promise<ActionResult<Quote>> {
-  const p = z.object({ workerId: uuid, categoryId: uuid, hours: z.number().min(0.5).max(12), promo: z.string().trim().max(24).optional() }).safeParse(input);
+export async function quoteAction(input: { workerId?: string; categoryId: string; hours: number; promo?: string }): Promise<ActionResult<Quote>> {
+  const p = z.object({ workerId: uuid.optional(), categoryId: uuid, hours: z.number().min(0.5).max(12), promo: z.string().trim().max(24).optional() }).safeParse(input);
   if (!p.success) return fail('DS_BAD_DURATION');
   try {
     const sb = await createClient();
-    const { data, error } = await sb.rpc('quote_booking', { p_worker_id: p.data.workerId, p_category_id: p.data.categoryId, p_hours: p.data.hours, p_code: p.data.promo || null });
-    if (error) throw error;
-    return done(undefined, data as Quote);
+    let workerId = p.data.workerId;
+    if (!workerId) {
+      const { data: ws } = await sb.from('worker_services').select('worker_id, workers!inner(status, is_listed)').eq('category_id', p.data.categoryId).eq('workers.status', 'approved').eq('workers.is_listed', true).limit(1).maybeSingle();
+      workerId = ws?.worker_id;
+      if (!workerId) {
+        const { data: anyW } = await sb.from('workers').select('id').eq('status', 'approved').limit(1).maybeSingle();
+        workerId = anyW?.id;
+      }
+    }
+    if (workerId) {
+      const { data, error } = await sb.rpc('quote_booking', { p_worker_id: workerId, p_category_id: p.data.categoryId, p_hours: p.data.hours, p_code: p.data.promo || null });
+      if (!error && data) return done(undefined, data as Quote);
+    }
+    // Fallback: direct category pricing
+    const { data: cat } = await sb.from('service_categories').select('*').eq('id', p.data.categoryId).single();
+    if (!cat) return fail('DS_CATEGORY_UNAVAILABLE');
+    const unit = Number(cat.base_price);
+    const qty = cat.price_unit === 'hour' ? p.data.hours : 1;
+    const sub = Math.round(unit * qty * 100) / 100;
+    const quote: Quote = {
+      unit_price: unit,
+      price_unit: cat.price_unit as 'hour' | 'fixed',
+      quantity: qty,
+      subtotal: sub,
+      discount: 0,
+      vat: 0,
+      total: sub,
+      promo_id: null,
+      promo_ok: false,
+      promo_error: null,
+    };
+    return done(undefined, quote);
   } catch (e) { return fail(e); }
 }
 
 // ───────── create ─────────
 const createSchema = z.object({
-  workerId: uuid, categoryId: uuid, startIso: z.string().datetime({ offset: true }), hours: z.number().min(0.5).max(12),
+  workerId: uuid.optional(), categoryId: uuid, startIso: z.string().datetime({ offset: true }), hours: z.number().min(0.5).max(12),
   address: z.string().trim().min(3).max(300), landmark: z.string().trim().max(200).optional(),
   lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180),
   notes: z.string().trim().max(600).optional(), promo: z.string().trim().max(24).optional(),
   provider: z.enum(['cash', 'esewa', 'khalti', 'stripe']), signedName: z.string().trim().min(2).max(80), agree: z.literal(true),
+  scopeAgreed: z.literal(true),
+  packageId: z.string().optional(),
+  scopePolicyVersion: z.string().optional(),
   phone: z.string().trim().regex(/^[+\d][\d\s-]{6,18}$/).optional(), saveAs: z.string().trim().max(40).optional(),
 });
 export type CreateBookingInput = z.input<typeof createSchema>;
@@ -47,9 +81,34 @@ export async function createBookingAction(input: CreateBookingInput): Promise<Ac
     if (!(await rateLimit(`book:${user.id}`, 8, 600))) return { ok: false, error: RATE_LIMITED };
 
     if (d.phone) await sb.from('profiles').update({ phone: d.phone }).eq('id', user.id);
+
+    const startTimeMs = new Date(d.startIso).getTime();
+    if (startTimeMs <= Date.now()) {
+      return fail({
+        en: 'The selected start time has already passed. Please choose a future time.',
+        ne: 'रोजिएको सुरु हुने समय बितिसकेको छ। कृपया आउँदो समय रोज्नुहोस्।'
+      });
+    }
+
+    // If customer did not manually choose a worker, find an approved worker to fulfill DB schema
+    let targetWorkerId = d.workerId;
+    if (!targetWorkerId) {
+      const { data: ws } = await sb.from('worker_services').select('worker_id, workers!inner(status, is_listed)').eq('category_id', d.categoryId).eq('workers.status', 'approved').eq('workers.is_listed', true).limit(1).maybeSingle();
+      targetWorkerId = ws?.worker_id;
+      if (!targetWorkerId) {
+        const { data: anyW } = await sb.from('workers').select('id').eq('status', 'approved').limit(1).maybeSingle();
+        targetWorkerId = anyW?.id;
+      }
+    }
+
+    if (!targetWorkerId) return fail('DS_WORKER_UNAVAILABLE');
+
+    const scopeAck = `[Scope Acknowledged: Policy ${d.scopePolicyVersion || 'v1.0'} on ${new Date().toISOString()}${d.packageId ? ` | Package: ${d.packageId}` : ''}]`;
+    const fullNotes = [d.notes?.trim(), scopeAck].filter(Boolean).join('\n');
+
     const { data, error } = await sb.rpc('create_booking', {
-      p_worker_id: d.workerId, p_category_id: d.categoryId, p_scheduled_start: d.startIso, p_duration_hours: d.hours,
-      p_address_text: d.address, p_landmark: d.landmark ?? null, p_lat: d.lat, p_lng: d.lng, p_notes: d.notes ?? null,
+      p_worker_id: targetWorkerId, p_category_id: d.categoryId, p_scheduled_start: d.startIso, p_duration_hours: d.hours,
+      p_address_text: d.address, p_landmark: d.landmark ?? null, p_lat: d.lat, p_lng: d.lng, p_notes: fullNotes,
       p_promo_code: d.promo || null, p_payment_provider: d.provider, p_signed_name: d.signedName, p_accepted_terms: d.agree,
       p_ip: await clientIp(), p_user_agent: await userAgent(),
     });
@@ -57,6 +116,23 @@ export async function createBookingAction(input: CreateBookingInput): Promise<Ac
     const b = data as { id: string; code: string; total_amount: number; payment_provider: Provider; customer_name: string };
 
     if (d.saveAs) await sb.from('saved_addresses').insert({ user_id: user.id, label: d.saveAs, address_text: d.address, landmark: d.landmark ?? null, lat: d.lat, lng: d.lng });
+
+    // ── Email notification to ADMIN_NOTIFY_EMAIL ──
+    const { data: catRow } = await sb.from('service_categories').select('name_en').eq('id', d.categoryId).maybeSingle();
+    sendAdminNewBookingEmail({
+      bookingId: b.id,
+      code: b.code,
+      serviceName: catRow?.name_en || 'Service',
+      customerName: b.customer_name || d.signedName,
+      customerPhone: d.phone,
+      scheduledStart: d.startIso,
+      durationHours: d.hours,
+      totalAmount: Number(b.total_amount),
+      paymentProvider: b.payment_provider,
+      address: d.address,
+      landmark: d.landmark,
+      notes: d.notes,
+    }).catch((err) => console.error('[email] Error sending admin notification email:', err));
 
     let pay: StartResult | null = null;
     if (b.payment_provider !== 'cash') { try { pay = await launch(b); } catch (e) { console.error('[payments] start failed', (e as Error).message); } }

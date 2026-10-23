@@ -95,7 +95,17 @@ insert into public.service_categories
   'Baby', 300, 'hour', 2, 3, false, false, 5),
  ('plumbing', 'Plumbing', 'प्लम्बिङ',
   'Coming soon.', 'छिट्टै आउँदैछ।', 'Leaks, taps and fittings fixed by a skilled plumber.', 'चुहावट, धारा र फिटिङ मर्मत।',
-  'Wrench', 500, 'hour', 1, 2, false, false, 6)
+  'Wrench', 500, 'hour', 1, 2, false, false, 6),
+ ('elderly-companionship', 'Elderly Companionship', 'वृद्ध साथी सेवा',
+  'Caring company and gentle support for your elders.', 'तपाईंका वृद्ध आफन्तका लागि मायालु साथ र सहयोग।',
+  'A caring and patient companion visits your elderly family member at home — for conversation, light activities, medication reminders, and emotional support. All companions are background-checked and trained in elder care.',
+  'एक दयालु र धैर्यशील साथी तपाईंका वृद्ध परिवारको सदस्यलाई घरमै भेट्छन् — कुराकानी, हल्का गतिविधि, औषधि याद दिलाउने र भावनात्मक सहयोगका लागि। सबै साथीहरू पृष्ठभूमि जाँचिएका र वृद्ध हेरचाहमा तालिम प्राप्त छन्।',
+  'HeartHandshake', 350, 'hour', 2, 3, true, true, 7),
+ ('child-care-companionship', 'Child Care Companionship', 'बाल स्याहार साथी सेवा',
+  'Attentive, nurturing care for your little ones.', 'तपाईंका साना बच्चाहरूका लागि ध्यानपूर्ण, स्नेही हेरचाह।',
+  'A trained child-care companion spends quality time with your children at home — play, storytelling, homework help, meals and safe supervision. Ideal while parents work or run errands.',
+  'एक तालिम प्राप्त बाल स्याहार साथी तपाईंका बच्चाहरूसँग घरमा गुणस्तरीय समय बिताउँछन् — खेल, कथा, गृहकार्य सहयोग, खाना र सुरक्षित निगरानी। आमाबाबु काम वा काज गर्दा आदर्श।',
+  'Baby', 300, 'hour', 2, 3, true, true, 8)
 on conflict (slug) do nothing;
 
 insert into public.promo_offers (code, title_en, title_ne, description_en, description_ne, discount_type, discount_value, min_order, per_user_limit, show_on_home) values

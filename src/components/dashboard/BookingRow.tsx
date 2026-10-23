@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { Bi } from '../Bi';
 import { Icon } from '../Icon';
 import { StatusBadge } from '../ui';
-import { fmtDateTime, rs } from '@/lib/utils';
+import { fmtDateTime } from '@/lib/utils';
 import type { Booking } from '@/types/db';
 
 export function BookingRow({ b, href }: { b: Booking; href?: string }) {
@@ -16,7 +16,7 @@ export function BookingRow({ b, href }: { b: Booking; href?: string }) {
           <span className="mt-1 block text-sm text-muted">{fmtDateTime(b.scheduled_start)} · {b.workers?.display_name ?? b.customer_name}</span>
           <span className="mt-0.5 block truncate text-xs text-muted">{b.code} · {b.address_text}</span>
         </span>
-        <span className="text-right"><span className="block font-semibold">{rs(b.total_amount)}</span></span>
+        <span className="text-right"><span className="block text-xs font-medium text-muted">{b.quantity}h</span></span>
         <ChevronRight className="h-5 w-5 shrink-0 text-muted transition group-hover:text-primary" aria-hidden />
       </Link>
     </li>

@@ -43,11 +43,18 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
+  devIndicators: false,
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: supabase ? [{ protocol: 'https', hostname: new URL(supabase).hostname, pathname: '/storage/v1/object/public/**' }] : [],
   },
-  experimental: { serverActions: { bodySizeLimit: '2mb', allowedOrigins: (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean) } },
+  experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 300,
+    },
+    serverActions: { bodySizeLimit: '2mb', allowedOrigins: (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean) }
+  },
   async headers() {
     return [
       { source: '/:path*', headers: securityHeaders },

@@ -31,7 +31,7 @@ export function BookingActions({ id, status, payStatus, provider, canReview, can
   const cancel = () => { if (window.confirm(ts('track.cancel_confirm'))) run(() => setStatusAction(id, 'cancelled', 'Cancelled by customer')); };
   const pay = () => start(async () => { setErr(null); const r = await startPaymentAction(id); if (!r.ok) setErr(r.error); else launchPayment(r.data!); });
 
-  const canPay = provider !== 'cash' && status === 'pending' && payStatus !== 'paid';
+  const canPay = false;
   return (
     <div className="space-y-6">
       {canPay && (

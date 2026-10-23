@@ -35,14 +35,26 @@ export async function applyAsWorkerAction(fd: FormData): Promise<ActionResult> {
   const { data: w, error } = await sb.from('workers').insert({ user_id: user.id, display_name: d.display_name, display_name_ne: d.display_name_ne || null, headline_en: d.headline_en || null, bio_en: d.bio_en || null, experience_years: d.experience_years, languages, available_days: days, work_start: d.work_start, work_end: d.work_end }).select('id').single();
   if (error) return fail(error);
   const wid = (w as { id: string }).id;
+
+  // Parse optional service area the worker drew on the map
+  const areaLat = Number(fd.get('area_lat')); const areaLng = Number(fd.get('area_lng')); const areaRkm = Number(fd.get('area_radius_km'));
+  const hasArea = !Number.isNaN(areaLat) && !Number.isNaN(areaLng) && areaRkm >= 0.5 && areaRkm <= 50;
+
   const [a, b] = await Promise.all([
     sb.from('worker_private').insert({ worker_id: wid, phone: d.phone, citizenship_no: d.citizenship_no || null, id_doc_path: d.id_doc_path, selfie_path: d.selfie_path, address: d.address || null }),
     sb.from('worker_services').insert(d.services.map((s) => ({ worker_id: wid, category_id: s.category_id, rate: s.rate }))),
   ]);
   if (a.error || b.error) return fail(a.error ?? b.error);
+
+  // Store service area if worker drew one (gracefully ignore if table doesn't exist yet)
+  if (hasArea) {
+    await sb.from('worker_service_areas').upsert({ worker_id: wid, center_lat: areaLat, center_lng: areaLng, radius_km: areaRkm }, { onConflict: 'worker_id' });
+  }
+
   revalidatePath('/worker', 'layout');
   return done({ en: 'Application received. We will review your documents soon.', ne: 'आवेदन प्राप्त भयो। हामी छिट्टै तपाईंका कागजात जाँच्नेछौं।' });
 }
+
 
 export async function updateWorkerProfileAction(fd: FormData): Promise<ActionResult> {
   const p = base.extend({ is_listed: z.string().optional(), avatar_url: z.string().max(500).optional(), whatsapp: z.string().trim().max(20).optional(), payout_method: z.string().trim().max(40).optional(), payout_account: z.string().trim().max(60).optional() }).safeParse(Object.fromEntries(fd));
@@ -60,6 +72,23 @@ export async function updateWorkerProfileAction(fd: FormData): Promise<ActionRes
   const up = await sb.from('worker_services').upsert(d.services.map((s) => ({ worker_id: wid, category_id: s.category_id, rate: s.rate })), { onConflict: 'worker_id,category_id' });
   if (up.error) return fail(up.error);
   await sb.from('worker_services').delete().eq('worker_id', wid).not('category_id', 'in', `(${keep.join(',')})`);
+
+  // Persist service area if provided (server-side validated)
+  const areaLat = Number(fd.get('area_lat'));
+  const areaLng = Number(fd.get('area_lng'));
+  const areaRkm = Number(fd.get('area_radius_km'));
+  const hasArea = !isNaN(areaLat) && !isNaN(areaLng)
+    && areaLat >= -90 && areaLat <= 90
+    && areaLng >= -180 && areaLng <= 180
+    && areaRkm >= 1 && areaRkm <= 50;
+  if (hasArea) {
+    await sb.from('worker_service_areas').upsert(
+      { worker_id: wid, center_lat: areaLat, center_lng: areaLng, radius_km: areaRkm },
+      { onConflict: 'worker_id' },
+    );
+  }
+
   revalidatePath('/worker', 'layout'); revalidatePath('/', 'layout');
   return done({ en: 'Profile updated.', ne: 'प्रोफाइल अद्यावधिक भयो।' });
 }
+

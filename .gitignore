@@ -1,10 +1,31 @@
 node_modules
 .next
 out
+
+# Environment / secrets — never commit real credentials
 .env
 .env.local
 .env.*.local
+
+# TypeScript build cache
 *.tsbuildinfo
 next-env.d.ts
+
+# macOS Finder metadata
 .DS_Store
+**/.DS_Store
+
+# Hosting platforms
 .vercel
+
+# Performance & test output artifacts
+perf-results*.json
+
+# Local database artifact (Prisma exploration)
+prisma/dev.db
+
+# AI-agent tooling artifacts
+.taste-skill/
+
+# Internal dev state docs (contain sensitive audit info)
+SECURITY_AUDIT_STATE.md

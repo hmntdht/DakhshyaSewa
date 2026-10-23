@@ -161,6 +161,16 @@ export async function adminBookingStatusAction(bookingId: string, to: string, re
   if (error) return fail(error);
   await audit(c, `booking_${to}`, 'bookings', bookingId, { reason }); revalidatePath('/admin', 'layout'); return done();
 }
+export async function adminAssignWorkerAction(bookingId: string, workerId: string): Promise<ActionResult> {
+  const c = await adminCtx(); if (!c || !uuid.safeParse(bookingId).success || !uuid.safeParse(workerId).success) return fail('DS_FORBIDDEN');
+  const { data: w } = await c.sb.from('workers').select('id, display_name').eq('id', workerId).eq('status', 'approved').maybeSingle();
+  if (!w) return bad('Selected worker is not approved.');
+  const { error } = await c.sb.from('bookings').update({ worker_id: workerId }).eq('id', bookingId);
+  if (error) return fail(error);
+  await audit(c, 'assign_worker', 'bookings', bookingId, { workerId, workerName: w.display_name });
+  revalidatePath('/admin', 'layout'); revalidatePath('/dashboard', 'layout');
+  return done({ en: `Assigned worker: ${w.display_name}`, ne: `सेवाप्रदायक तोकियो: ${w.display_name}` });
+}
 export async function refundBookingAction(bookingId: string): Promise<ActionResult> {
   const c = await adminCtx(); if (!c || !uuid.safeParse(bookingId).success) return fail('DS_FORBIDDEN');
   const { error: e1 } = await c.sb.from('payments').update({ status: 'refunded' }).eq('booking_id', bookingId).eq('status', 'paid');

@@ -19,6 +19,10 @@ function tooMany(key: string, limit: number, windowMs: number) {
   return ++b.n > limit;
 }
 
+function hasAuthCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some((c) => c.name.includes('-auth-token'));
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const isApi = pathname.startsWith('/api/') || pathname.startsWith('/auth/');
@@ -31,11 +35,29 @@ export async function middleware(request: NextRequest) {
     if (mutating && !NO_ORIGIN_CHECK.includes(pathname) && !isSameOrigin(request)) return new NextResponse('Cross-site request blocked', { status: 403 });
   }
 
-  const { response, user } = await updateSession(request);
-  if (!user && PRIVATE.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-    const url = request.nextUrl.clone(); url.pathname = '/login'; url.search = `?next=${encodeURIComponent(pathname + search)}`;
+  const isPrivate = PRIVATE.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
+  // Fast path: if private route and no auth cookie at all, bounce instantly without hitting Supabase network
+  if (isPrivate && !hasAuthCookie(request)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.search = `?next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(url);
   }
+
+  // Only refresh session if route is private or visitor has an active auth cookie
+  let response = NextResponse.next({ request });
+  if (isPrivate || hasAuthCookie(request)) {
+    const sessionRes = await updateSession(request);
+    response = sessionRes.response;
+    if (isPrivate && !sessionRes.user) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      url.search = `?next=${encodeURIComponent(pathname + search)}`;
+      return NextResponse.redirect(url);
+    }
+  }
+
   response.headers.set('x-request-id', crypto.randomUUID());
   return response;
 }

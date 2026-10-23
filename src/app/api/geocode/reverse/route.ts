@@ -16,7 +16,8 @@ export async function GET(req: Request) {
   if (cache.has(key)) return NextResponse.json({ address: cache.get(key) });
   const base = process.env.NOMINATIM_BASE_URL ?? 'https://nominatim.openstreetmap.org';
   try {
-    const r = await fetch(`${base}/reverse?format=jsonv2&zoom=18&lat=${lat}&lon=${lng}`, { headers: { 'User-Agent': process.env.GEOCODER_USER_AGENT ?? 'DakshaSewa/1.0', 'Accept-Language': 'en,ne' }, signal: AbortSignal.timeout(6000) });
+    const ua = (process.env.GEOCODER_USER_AGENT ?? 'DakshaSewa/1.0 (contact: info@dakshasewa.com)').replace(/^"|"$/g, '');
+    const r = await fetch(`${base}/reverse?format=jsonv2&zoom=18&lat=${lat}&lon=${lng}`, { headers: { 'User-Agent': ua, 'Accept-Language': 'en,ne' }, signal: AbortSignal.timeout(6000) });
     const j = (await r.json()) as { display_name?: string };
     const address = (j.display_name ?? '').split(',').slice(0, 3).join(',').trim();
     if (address) { cache.set(key, address); if (cache.size > 800) cache.delete(cache.keys().next().value as string); }

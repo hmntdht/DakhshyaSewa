@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PartyPopper } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { resolveDisputeAction } from '@/lib/admin/actions';
 import { ActionForm, SubmitButton } from '@/components/form';
@@ -28,7 +29,12 @@ export default async function AdminDisputes() {
               <div className="flex flex-wrap items-center gap-2"><select name="status" defaultValue="under_review" className="field !w-44"><option value="under_review">Under review</option><option value="resolved">Resolved</option><option value="rejected">Rejected</option></select><SubmitButton>Update</SubmitButton></div>
             </ActionForm>)}
         </article>); })}
-        {rows.length === 0 && <p className="card py-14 text-center text-muted">No disputes. 🎉</p>}</div>
+        {rows.length === 0 && (
+          <p className="card flex items-center justify-center gap-2 py-14 text-center text-muted">
+            <span>No disputes.</span>
+            <PartyPopper className="h-4 w-4 text-primary" />
+          </p>
+        )}</div>
     </>
   );
 }

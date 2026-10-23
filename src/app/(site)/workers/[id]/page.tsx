@@ -7,7 +7,7 @@ import { Avatar, Stars } from '@/components/ui';
 import { Bi, pair } from '@/components/Bi';
 import { T } from '@/components/T';
 import { Icon } from '@/components/Icon';
-import { fmtDate, rs, to12h } from '@/lib/utils';
+import { fmtDate, to12h } from '@/lib/utils';
 
 export const revalidate = 60;
 type Props = { params: Promise<{ id: string }> };
@@ -63,7 +63,9 @@ export default async function WorkerPage({ params }: Props) {
               {services.map(({ s, c }) => (
                 <li key={c!.id} className="flex items-center justify-between gap-4 py-4">
                   <span className="flex items-center gap-3"><Icon name={c!.icon} className="h-4 w-4 text-primary" /><span><Bi en={c!.name_en} ne={c!.name_ne} /></span></span>
-                  <span className="text-right text-sm"><b className="text-base">{rs(s.rate ?? c!.base_price)}</b>{c!.price_unit === 'hour' && <span className="text-muted"> / <T k="common.hour" /></span>}</span>
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                    <Bi en="Available" ne="उपलब्ध" />
+                  </span>
                 </li>
               ))}
             </ul>

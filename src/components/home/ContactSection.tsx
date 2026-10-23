@@ -28,6 +28,7 @@ export async function ContactSection() {
             <Field label={<T k="enquiry.name" />}><input name="name" required minLength={2} maxLength={80} autoComplete="name" className="field" /></Field>
             <Field label={<T k="enquiry.phone" />}><input name="phone" required inputMode="tel" autoComplete="tel" pattern="[+0-9][0-9 \-]{6,18}" className="field" /></Field>
           </div>
+          <Field label={<T k="enquiry.email" />}><input name="email" type="email" inputMode="email" autoComplete="email" maxLength={120} placeholder="you@example.com" className="field" /></Field>
           <Field label={<T k="enquiry.service" />}>
             <select name="service" className="field" defaultValue=""><option value="">—</option>{cats.map((s) => <option key={s.id} value={s.name_en}>{s.name_en}</option>)}</select>
           </Field>

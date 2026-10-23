@@ -14,7 +14,7 @@ export function HowItWorks() {
           <Link href="/book" className="btn btn-primary btn-lg -mt-4"><T k="nav.book" /></Link>
         </div>
         {/* the sequence is drawn as a route: dots are stops, the last stop is the pin */}
-        <ol className="relative space-y-12 pl-12 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-gradient-to-b before:from-primary before:via-line before:to-transparent">
+        <ol className="relative space-y-12 pl-12 before:absolute before:bottom-3 before:left-[15px] before:top-3 before:w-px before:bg-line">
           {STEPS.map((s, i) => (
             <li key={s} className="relative">
               <span className="absolute -left-12 top-0 grid h-8 w-8 place-items-center rounded-full border border-primary bg-bg text-sm font-semibold text-primary">

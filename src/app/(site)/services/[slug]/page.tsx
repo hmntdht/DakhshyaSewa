@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { ArrowLeft, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { getCategories, getCategoryBySlug, getWorkersForCategory, type WorkerSort } from '@/lib/queries';
 import { Bi } from '@/components/Bi';
 import { T } from '@/components/T';
@@ -8,6 +10,8 @@ import { Icon } from '@/components/Icon';
 import { WorkerCard } from '@/components/WorkerCard';
 import { EmptyState } from '@/components/ui';
 import { cn, rs } from '@/lib/utils';
+import { ServiceGuidelinesView } from '@/components/services/ServiceGuidelinesView';
+import { getServiceImage } from '@/lib/serviceImages';
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ sort?: string }> };
 
@@ -25,22 +29,131 @@ export default async function ServicePage({ params, searchParams }: Props) {
   const key: WorkerSort = SORTS.some(([k]) => k === sort) ? (sort as WorkerSort) : 'rating';
   const [workers, cats] = await Promise.all([getWorkersForCategory(cat.id, key), getCategories()]);
   const kids = cats.filter((c) => c.parent_id === cat.id);
+  const img = getServiceImage(slug);
   return (
     <>
       <section className="hero-lines border-b border-line">
-        <div className="container-x grid gap-8 py-14 sm:py-20 lg:grid-cols-[1.4fr_1fr] lg:items-end">
-          <div>
-            <span className="grid h-14 w-14 place-items-center rounded-full bg-primary/15 text-primary"><Icon name={cat.icon} className="h-6 w-6" /></span>
-            <h1 className="mt-6 text-balance text-4xl font-light tracking-tight sm:text-6xl"><Bi en={cat.name_en} ne={cat.name_ne} /></h1>
-            {cat.name_ne && <p data-l="en" lang="ne" className="font-ne mt-2 text-2xl font-extrabold text-primary">{cat.name_ne}</p>}
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted"><Bi en={cat.description_en ?? cat.tagline_en} ne={cat.description_ne ?? cat.tagline_ne} /></p>
-            {kids.length > 0 && <div className="mt-5 flex flex-wrap gap-2">{kids.map((k) => <Link key={k.id} href={`/services/${k.slug}`} className="chip hover:border-primary"><Bi en={k.name_en} ne={k.name_ne} /></Link>)}</div>}
+        <div className="container-x py-10 sm:py-16">
+          {/* Breadcrumb back link */}
+          <Link
+            href="/services"
+            className="mb-8 inline-flex items-center gap-2 text-xs font-medium text-muted transition-colors hover:text-primary"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span><Bi en="All Services" ne="सबै सेवाहरू" /></span>
+          </Link>
+
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
+            {/* Left Column (7 cols): Title, descriptions, service features, action card */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  <Icon name={cat.icon} className="h-3.5 w-3.5" />
+                  <Bi en="Certified Service" ne="प्रमाणित सेवा" />
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-muted">
+                  <ShieldCheck className="h-3.5 w-3.5 text-ok" />
+                  <Bi en="Verified Background" ne="पृष्ठभूमि प्रमाणीकरण" />
+                </span>
+              </div>
+
+              <div>
+                <h1 className="text-balance text-4xl font-light tracking-tight sm:text-5xl text-fg">
+                  <Bi en={cat.name_en} ne={cat.name_ne} />
+                </h1>
+                {cat.name_ne && (
+                  <p data-l="en" lang="ne" className="font-ne mt-2 text-2xl font-bold text-primary">
+                    {cat.name_ne}
+                  </p>
+                )}
+              </div>
+
+              <p className="max-w-2xl text-base sm:text-lg leading-relaxed text-muted">
+                <Bi en={cat.description_en ?? cat.tagline_en} ne={cat.description_ne ?? cat.tagline_ne} />
+              </p>
+
+              {kids.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {kids.map((k) => (
+                    <Link key={k.id} href={`/services/${k.slug}`} className="chip hover:border-primary">
+                      <Bi en={k.name_en} ne={k.name_ne} />
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {/* Mobile-only image preview right before action box */}
+              {img && (
+                <div className="relative aspect-square w-full max-w-sm mx-auto overflow-hidden rounded-2xl border border-line/80 lg:hidden">
+                  <Image
+                    src={img}
+                    alt={cat.name_en}
+                    fill
+                    priority
+                    sizes="90vw"
+                    className="object-cover object-center"
+                  />
+                </div>
+              )}
+
+              {/* Direct Home Service Action Card */}
+              <div className="rounded-2xl border border-line bg-surface/90 p-6 sm:p-7">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-tight text-fg">
+                      <Bi en="Direct Home Service" ne="प्रत्यक्ष घरमै सेवा" />
+                    </h2>
+                    <p className="mt-1 text-xs sm:text-sm text-muted max-w-md">
+                      <Bi
+                        en="Book your preferred date and time. Our administration team contacts you promptly to confirm all details."
+                        ne="आफ्नो उपयुक्त समय छान्नुहोस्। हाम्रो टोलीले सम्पर्क गरी सबै विवरण पुष्टि गर्नेछ।"
+                      />
+                    </p>
+                  </div>
+                  <Link href={`/book?service=${cat.slug}`} className="btn btn-primary btn-lg shrink-0 w-full sm:w-auto">
+                    <T k="nav.book" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column (5 cols): Desktop Photo Showcase */}
+            {img && (
+              <div className="hidden lg:col-span-5 lg:flex lg:justify-end">
+                <div className="relative aspect-square w-full max-w-[440px] overflow-hidden rounded-3xl border border-line bg-surface">
+                  <Image
+                    src={img}
+                    alt={cat.name_en}
+                    fill
+                    priority
+                    sizes="(min-width:1280px) 440px, 380px"
+                    className="object-cover object-center"
+                  />
+                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-xl border border-white/15 bg-black/80 px-3.5 py-2">
+                    <div className="flex items-center gap-2 text-xs font-medium text-white">
+                      <Icon name={cat.icon} className="h-4 w-4 text-primary" />
+                      <span>{cat.name_en}</span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-white/80">
+                      Daksha Sewa
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="d-shape-sm border border-line bg-surface p-7">
-            <p className="text-sm text-muted"><T k="common.from" /></p>
-            <p className="text-5xl font-extralight tracking-tight">{rs(cat.base_price)}<span className="text-lg text-muted">{cat.price_unit === 'hour' ? <> / <T k="common.hour" /></> : <> · <T k="common.fixed" /></>}</span></p>
-            <p className="mt-2 text-xs text-muted"><T k="service.min" /> {cat.min_hours} <T k="common.hours" /></p>
-            <Link href={`/book?service=${cat.slug}`} className="btn btn-primary btn-lg mt-6 w-full"><T k="nav.book" /></Link>
+        </div>
+      </section>
+
+
+      {/* Service Scope & Customer Guidelines: What's Included and Not Included */}
+      <section className="border-b border-line bg-bg/50 py-14 sm:py-20">
+        <div className="container-x">
+          <ServiceGuidelinesView slug={cat.slug} variant="detail" />
+          <div className="mt-8 flex justify-end">
+            <Link href={`/book?service=${cat.slug}`} className="btn btn-primary btn-lg">
+              <T k="nav.book" />
+            </Link>
           </div>
         </div>
       </section>

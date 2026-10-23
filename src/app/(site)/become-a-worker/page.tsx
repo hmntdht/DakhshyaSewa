@@ -1,12 +1,22 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import nextDynamic from 'next/dynamic';
 import { Banknote, CalendarClock, ShieldCheck } from 'lucide-react';
-import { ApplyForm } from '@/components/worker/ApplyForm';
 import { T } from '@/components/T';
 import { getProfile } from '@/lib/auth/session';
 import { getCategories } from '@/lib/queries';
 import { createClient } from '@/lib/supabase/server';
+
+const ApplyForm = nextDynamic(() => import('@/components/worker/ApplyForm').then((m) => m.ApplyForm), {
+  loading: () => (
+    <div className="space-y-8 animate-pulse">
+      <div className="h-48 rounded-app border border-line bg-surface/60" />
+      <div className="h-64 rounded-app border border-line bg-surface/60" />
+      <div className="h-72 rounded-app border border-line bg-surface/60" />
+    </div>
+  ),
+});
 
 export const dynamic = 'force-dynamic';
 
